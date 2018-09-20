@@ -164,11 +164,15 @@ def optimize(nn_last_layer, correct_label, learning_rate, num_classes):
 
         unweighted_losses = tf.nn.softmax_cross_entropy_with_logits(logits= logits, labels= correct_label_flat)
         cross_entropy_loss = tf.reduce_mean(unweighted_losses)
+
+        reg_losses = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
+        reg_constant = 0.01  # Choose an appropriate one.
+        loss = cross_entropy_loss + reg_constant * sum(reg_losses)    
         
         # Define optimizer. Adam in this case to have variable learning rate.
         optimizer = tf.train.AdamOptimizer(learning_rate= learning_rate)
         # Apply optimizer to the loss function.
-        train_op = optimizer.minimize(cross_entropy_loss)    
+        train_op = optimizer.minimize(loss) # including regularize loss    
         
 
     return logits, train_op, cross_entropy_loss
@@ -254,7 +258,7 @@ def train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_l
                 input_image: image, 
                 correct_label: label, 
                 keep_prob: 0.5,
-                learning_rate : 1e-4
+                learning_rate : 1e-6     # 1e-4
                 }
 
             _, loss = sess.run( [train_op, cross_entropy_loss], feed_dict=feed_dict  )
